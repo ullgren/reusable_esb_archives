@@ -1,0 +1,75 @@
+<?xml version = "1.0" encoding = "UTF-8"?>
+<jbossesb xmlns="http://anonsvn.labs.jboss.com/labs/jbossesb/trunk/product/etc/schemas/xml/jbossesb-1.0.1.xsd" parameterReloadSecs="5" >
+
+    <providers>
+          <fs-provider name="FSprovider1">
+          	<fs-bus busid="fileChannel" >
+          		<fs-message-filter
+          			directory="${com.ullgren.pontus.filetransferservice.inbox}"
+          			input-suffix=".txt"
+          			work-suffix=".esbWorking"
+          			post-delete="true"
+          			error-delete="false"
+          			error-directory="${com.ullgren.pontus.filetransferservice.errordir}"
+          			error-suffix=".IN_ERROR"
+          		/>
+          	</fs-bus>
+          </fs-provider>
+          
+          <jms-provider name="JBossMessaging" 
+          		connection-factory="ConnectionFactory"
+            	 >
+            
+			    <jms-bus busid="esbChannel">
+			        <jms-message-filter
+			            dest-type="QUEUE"
+			            dest-name="queue/myfiletransfer_esb"
+			        />
+			    </jms-bus>
+			
+		   </jms-provider>
+
+      </providers>
+      
+      <services>
+          
+        <service 
+			category="myCategory"
+			name="myFileTransferService"
+        	description="A simple File Transfer Service" >
+            <listeners>
+            	<fs-listener name="FileGateway" busidref="fileChannel" is-gateway="true" poll-frequency-seconds="10">
+            		<property name="mimeType" value="text/plain" />
+            		<property name="encoding" value="UTF-8" />
+            	</fs-listener>
+                <jms-listener name="esbChannelListner"
+                              busidref="esbChannel"
+                />
+            </listeners>
+            <actions mep="OneWay">       
+               	<action name="print-message" class="org.jboss.soa.esb.actions.SystemPrintln">
+           		<property name="printfull" value="true"/>
+           	</action>
+		 <action name="notificationAction" class="org.jboss.soa.esb.actions.Notifier">    
+                                <property name="okMethod" value="notifyOK" />
+                                <property name="notification-details"> 
+	                        <NotificationList type="ok">
+                                        <target class="NotifyConsole"/>
+	                                <target class="NotifyFiles">
+	                                        <file append="false" URI="${com.ullgren.pontus.filetransferservice.outbox}/output.txt"/>
+                                        </target>
+                                </NotificationList>
+                                <NotificationList type="err">
+                                        <target class="NotifyConsole"/>
+		                        <target class="NotifyFiles">
+                                                <file append="false" URI="${com.ullgren.pontus.filetransferservice.outbox}/error.txt"/>
+                                        </target>
+                                </NotificationList>
+                        </property>
+                </action>
+
+            </actions>
+        </service>
+      </services>
+     
+</jbossesb>

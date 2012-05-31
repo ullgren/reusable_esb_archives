@@ -1,0 +1,118 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.ullgren.pontus.sample.jbossesb</groupId>
+    <artifactId>myfiletransferservice</artifactId>
+    <version>1.0</version>
+    <packaging>jboss-esb</packaging>
+    <name>My File Transfer Service</name>
+    <properties>
+        <final.name>${project.artifactId}</final.name>
+    </properties>
+
+   <!--
+    Note:
+    By default the 'development' profile below will be utilized - if no other profile gets activated.
+    To use another profile define which by the flag: -P<profile>. E g:
+    > mvn -Pproduction <phase>
+    -->
+    <profiles>
+        <profile>
+            <id>development</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <environment.specific.property>dev</environment.specific.property>
+                <environment.specific.filterfile>development.properties</environment.specific.filterfile>
+            </properties>
+        </profile>
+        <profile>
+            <id>production</id>
+            <properties>
+                <environment.specific.property>prod</environment.specific.property>
+                <environment.specific.filterfile>production.properties</environment.specific.filterfile>
+            </properties>
+        </profile>
+    </profiles>
+
+    <build>
+        <resources>
+            <!--
+            Note:
+            src/main/resources is the default resource directory but must anyhow be stated explicitly here.
+            -->
+            <!-- Filtered and included resources: -->
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>**/*.txt</include>
+                    <include>**/*.xml</include>
+                </includes>
+            </resource>
+        </resources>
+
+        <filters>
+            <!--
+            Note:
+            The properties of a filter can be directly specified - aka hard coded - and/or given from the command line
+            with -Denvironment.specific.filterfile=<value>.Here it will override the property from the chosen profile.
+            Warning:
+            A really sneaky command could be (mixing developement & production values) as below. Do not do this!
+            > mvn -Pdevelopment -Denvironment.specific.filterfile=production.properties test
+            -->
+            <filter>src/main/filters/${environment.specific.filterfile}</filter>
+        </filters>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>jboss-packaging-maven-plugin</artifactId>
+                <version>2.2</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <archiveName>${final.name}</archiveName>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.jboss.soa.bpel.dependencies.esb</groupId>
+            <artifactId>jbossesb-rosetta</artifactId>
+            <!-- JBoss have not published 4.11 to there Maven repo -->
+            <version>4.9</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <repositories>
+        <repository>
+            <id>central</id>
+            <url>http://repo1.maven.org/maven2/</url>
+        </repository>
+        <repository>
+            <id>JBossCommunityNexus</id>
+            <url>http://repository.jboss.org/nexus/content/groups/public-jboss</url>
+        </repository>
+        <repository>
+            <id>maven2-repository.java.net</id>
+            <!-- <name>Java.net Repository for Maven</name>  -->
+            <url>http://download.java.net/maven/2/</url>
+            <layout>default</layout>
+        </repository>
+    </repositories>
+    
+</project>
